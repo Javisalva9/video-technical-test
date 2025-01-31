@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "0.0.0",
+  "description": "Video Server",
+  "author": "DevTeam <developers@kodify.io>",
+  "homepage": "https://github.com/gmsllc/technical-test#readme",
+  "license": "ISC",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gmsllc/technical-test/kodify-technical-test.git"
+  },
+  "scripts": {
+    "start": "node_modules/.bin/nodemon src/index.js",
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/gmsllc/technical-test/issues"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.10.9",
+    "nodemon": "^2.0.4"
+  }
+}
