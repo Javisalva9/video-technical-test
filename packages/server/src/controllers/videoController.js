@@ -22,11 +22,17 @@ async function getVideoById(req, res, next) {
     }
 };
 
-async function getToken(req, res, next) {
-    res.json({ token: 'fake-token' });
+async function getVideoWithToken(req, res, next) {
+    const video = req.body.video;
+    try {
+        const tokenizedVideo = await videoService.tokenizeVideoSources(video);
+        res.json(tokenizedVideo);
+    } catch (error) {
+        next(error);
+    }
 }
 
 module.exports = {
     getVideoById,
-    getToken,
+    getVideoWithToken,
 };
