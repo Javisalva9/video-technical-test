@@ -1,14 +1,14 @@
 const Video = require('../models/Video');
 const crypto = require('crypto');
-const {CDNSECRETS, CDNURLS} = require('../constants/cdnSecrets');
+const { CDNSECRETS, CDNURLS } = require('../constants/cdnSecrets');
+const { createError } = require('../common/error');
 
 const getVideoById = async (videoId) => {
     try {
         const video = await Video.findOne({ videoId });
         if (!video) {
-            const error = new Error('Video not found');
-            error.status = 404;
-            throw error;
+            throw createError('Video not found', 404);
+
         }
         return video;
     } catch (error) {
@@ -17,22 +17,33 @@ const getVideoById = async (videoId) => {
 };
 
 const getSecureSource = (originalSrc, secret, cdnUrl) => {
-    return `${cdnUrl}${originalSrc}?token=${crypto.createHash('md5').update(`${originalSrc}?secret=${secret}`).digest('hex')}`;
+    try {
+        return `${cdnUrl}${originalSrc}?token=${crypto.createHash('md5').update(`${originalSrc}?secret=${secret}`).digest('hex')}`;
+    } catch (error) {
+        console.error("Error generating secure source:", error);
+        throw createError('Error generating secure source', 500); // Error interno del servidor
+    }
 };
 
 const tokenizeVideoSources = (video, cndNumber = 1) => {
     const secret = CDNSECRETS[cndNumber];
     const cdnUrl = CDNURLS[cndNumber];
     if (!secret || !cdnUrl) {
-        const error = new Error('Invalid cdn number');
-        error.status = 400;
-        throw error;
+        throw createError('Invalid cdn number', 400);
     }
 
-    const tokenizedSources = video.sources.map(source => ({
-        ...source,
-        src: getSecureSource(source.src, secret, cdnUrl),
-    }));
+    if (!video.sources || !Array.isArray(video.sources) || video.sources.length === 0) {
+        throw createError('Video has no sources', 400);
+    }
+    const tokenizedSources = video.sources.map((source) => {
+        if (!source.src || typeof source.src !== 'string') {
+            throw createError('Invalid source src', 400);
+        }
+        return {
+            ...source,
+            src: getSecureSource(source.src, secret, cdnUrl),
+        };
+    });
 
     return {
         ...video,
