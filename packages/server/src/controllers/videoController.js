@@ -1,7 +1,7 @@
 const VideoViewedRecord = require('../models/VideoViewedRecord');
 const videoService = require('../services/videoService');
 
-async function getById(req, res) {
+async function getById(req, res, next) {
     const { videoId } = req.params;
 
     try {
@@ -18,16 +18,11 @@ async function getById(req, res) {
             await VideoViewedRecord.create(videoViewedRecord);
         }
     } catch (error) {
-        console.error(error);
-        if (error.status === 404) {
-            res.status(404).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: 'Server Error' });
-        }
+        next(error);
     }
 };
 
-async function getToken(req, res) {
+async function getToken(req, res, next) {
     res.json({ token: 'fake-token' });
 }
 

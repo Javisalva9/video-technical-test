@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const app = express();
 const port = 80;
+const errorMiddleware = require('./middlewares/errorMiddleware.js');
 
 const videoRoutes = require('./routes/videoRoutes.js');
 
@@ -16,6 +17,8 @@ app.use(function setHeaders(req, res, next) {
 });
 
 app.use('/video', videoRoutes);
+
+app.use(errorMiddleware);
 
 function startServer() {
     mongoose.connect('mongodb://mongo/db');

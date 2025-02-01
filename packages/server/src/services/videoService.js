@@ -10,7 +10,6 @@ const getVideo = async (videoId) => {
         }
         return video;
     } catch (error) {
-        console.error('Error in videoService.getVideo:', error);
         throw error;
     }
 };
