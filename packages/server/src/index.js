@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 80;
 
-const { videoController } = require('./controllers/video');
+const videoRoutes = require('./routes/videoRoutes.js');
 
 app.use(bodyParser.json());
 
@@ -15,7 +15,7 @@ app.use(function setHeaders(req, res, next) {
     next();
 });
 
-app.get('/video/:videoId', videoController);
+app.use('/video', videoRoutes);
 
 function startServer() {
     mongoose.connect('mongodb://mongo/db');
