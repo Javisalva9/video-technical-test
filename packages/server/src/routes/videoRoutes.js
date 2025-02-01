@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getById, getToken } = require('../controllers/videoController');
+const { getVideoById, getVideoWithToken } = require('../controllers/videoController');
 
-router.get('/:videoId', getById);
+router.get('/:videoId', getVideoById);
 router.post('/token', getToken);
 
 module.exports = router;

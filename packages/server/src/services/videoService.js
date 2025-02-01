@@ -1,6 +1,6 @@
 const Video = require('../models/Video');
 
-const getVideo = async (videoId) => {
+const getVideoById = async (videoId) => {
     try {
         const video = await Video.findOne({ videoId });
         if (!video) {
@@ -15,5 +15,5 @@ const getVideo = async (videoId) => {
 };
 
 module.exports = {
-    getVideo,
+    getVideoById,
 };

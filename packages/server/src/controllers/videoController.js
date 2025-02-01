@@ -1,11 +1,11 @@
 const VideoViewedRecord = require('../models/VideoViewedRecord');
 const videoService = require('../services/videoService');
 
-async function getById(req, res, next) {
+async function getVideoById(req, res, next) {
     const { videoId } = req.params;
 
     try {
-        const video = await videoService.getVideo(videoId);
+        const video = await videoService.getVideoById(videoId);
         res.json(video);
     
         if (video) {
@@ -27,6 +27,6 @@ async function getToken(req, res, next) {
 }
 
 module.exports = {
-    getById,
+    getVideoById,
     getToken,
 };

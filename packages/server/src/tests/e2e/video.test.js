@@ -2,15 +2,15 @@ const request = require('supertest');
 const { app, startServer } = require('../../index');
 
 describe('Video API', () => {
-  let server;
+    let server;
 
-  beforeAll(async () => {
-      server = await startServer(); 
-  });
+    beforeAll(async () => {
+        server = await startServer();
+    });
 
-  afterAll(async () => {
-      await server.close(); 
-  });
+    afterAll(async () => {
+        await server.close();
+    });
 
     describe('GET /video/:videoId', () => {
         it('should return a video when a valid videoId is provided', async () => {
