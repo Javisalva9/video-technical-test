@@ -20,9 +20,10 @@ app.use('/video', videoRoutes);
 
 app.use(errorMiddleware);
 
-function startServer() {
-    mongoose.connect('mongodb://mongo/db');
-
+async function startServer() {
+    await mongoose.connect('mongodb://mongo/db', {
+        serverSelectionTimeoutMS: 5000
+    });
     const db = mongoose.connection;
     db.on('connected', function () {
         console.log('MongoDB connected!');
@@ -44,9 +45,15 @@ function startServer() {
     db.on('reconnected', function () {
         console.log('MongoDB reconnected!');
     });
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
         console.log(`Example app listening at http://localhost:${port}`)
     });
+
+    return server;
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'test') {
+    startServer();
+}
+
+module.exports = { app, startServer };

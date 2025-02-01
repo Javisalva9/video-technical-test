@@ -60,6 +60,13 @@ services:
       - ./packages/server:/srv/kodify-technical-test-server
       - node_modules_kodify-technical-test-server:/srv/kodify-technical-test-server/node_modules
 
+  tests:
+    build:
+      context: ./packages/server
+      dockerfile: ./docker/env/artifacts/server/Dockerfile.test
+    networks:
+      kodify-technical-test:
+
   dependencies:
     image: dadarek/wait-for-dependencies
     depends_on:

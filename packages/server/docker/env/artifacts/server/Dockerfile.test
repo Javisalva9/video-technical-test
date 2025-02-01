@@ -1,0 +1,13 @@
+FROM node:lts-alpine
+
+WORKDIR /app/packages/server
+
+COPY package*.json yarn.lock ./
+
+ENV NODE_ENV='test'
+
+RUN yarn install
+
+COPY . .
+
+CMD ["npm", "test"]
