@@ -21,11 +21,11 @@ const getSecureSource = (originalSrc, secret, cdnUrl) => {
         return `${cdnUrl}${originalSrc}?token=${crypto.createHash('md5').update(`${originalSrc}?secret=${secret}`).digest('hex')}`;
     } catch (error) {
         console.error("Error generating secure source:", error);
-        throw createError('Error generating secure source', 500); // Error interno del servidor
+        throw createError('Error generating secure source', 500);
     }
 };
 
-const tokenizeVideoSources = (video, cndNumber = 1) => {
+const tokenizeVideoSources = async (video, cndNumber = 1) => {
     const secret = CDNSECRETS[cndNumber];
     const cdnUrl = CDNURLS[cndNumber];
     if (!secret || !cdnUrl) {
