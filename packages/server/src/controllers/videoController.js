@@ -1,4 +1,5 @@
 const videoService = require('../services/videoService');
+const videoViewedRecordService = require('../services/videoViewedRecordService');
 
 async function getVideoById(req, res, next) {
     const { videoId } = req.params;

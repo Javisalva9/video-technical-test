@@ -31,8 +31,6 @@ const tokenizeVideoSources = async (video, cdn) => {
     const secret = CDNSECRETS[cdnNumber];
     const cdnUrl = CDNURLS[cdnNumber];
 
-    console.log(cdnNumber);
-
     if (!secret || !cdnUrl) {
         throw createError('Invalid cdn number', 400);
     }
