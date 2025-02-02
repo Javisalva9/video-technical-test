@@ -4,8 +4,6 @@ const { CDNSECRETS, CDNURLS } = require('../constants/cdnSecrets');
 const { createError } = require('../common/error');
 const cdnService = require('./cdnService');
 
-let lastCdnNumber = 0;
-
 const getVideoById = async (videoId) => {
     try {
         const video = await Video.findOne({ videoId });
