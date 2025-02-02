@@ -2,10 +2,17 @@ const videoService = require('../../services/videoService');
 const Video = require('../../models/Video');
 const crypto = require('crypto');
 const { CDNSECRETS, CDNURLS } = require('../../constants/cdnSecrets');
+const { createError } = require('../../common/error'); // Importar createError
+const cdnService = require('../../services/cdnService');
 
 jest.mock('../../models/Video');
+jest.mock('../../services/cdnService');
 
 describe('videoService', () => {
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
     describe('getVideoById', () => {
         it('should return a video when it exists', async () => {
             const mockVideo = { videoId: '12345', title: 'Test Video', sources: [] };
@@ -19,12 +26,45 @@ describe('videoService', () => {
         it('should throw an error when the video does not exist', async () => {
             Video.findOne.mockResolvedValue(null);
 
-            await expect(videoService.getVideoById('123')).rejects.toThrow('Video not found');
+            await expect(videoService.getVideoById('123')).rejects.toThrow(createError('Video not found', 404));
             expect(Video.findOne).toHaveBeenCalledWith({ videoId: '123' });
         });
     });
 
     describe('tokenizeVideoSources', () => {
+        beforeEach(() => {
+            cdnService.getNextCdnNumber.mockReturnValue(1);
+        });
+
+        it('should use the next CDN number in sequence', async () => {
+            const mockVideo = {
+                _id: '679e9a87e042bd58133fb2de',
+                videoId: '12345',
+                title: 'Big Buck Bunny',
+                sources: [
+                    {
+                        src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
+                        size: 1080,
+                        type: 'video/mp4',
+                    },
+                ],
+            };
+
+            cdnService.getNextCdnNumber.mockReturnValueOnce(1).mockReturnValueOnce(2).mockReturnValueOnce(3).mockReturnValueOnce(1);
+
+            await videoService.tokenizeVideoSources(mockVideo);
+            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(1);
+
+            await videoService.tokenizeVideoSources(mockVideo);
+            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(2);
+
+            await videoService.tokenizeVideoSources(mockVideo);
+            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(3);
+
+            await videoService.tokenizeVideoSources(mockVideo);
+            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(1);
+        });
+
         it('should return a video with tokenized sources when cdnNumber is valid', async () => {
             const mockVideo = {
                 _id: '679e9a87e042bd58133fb2de',
@@ -70,10 +110,11 @@ describe('videoService', () => {
                     },
                 ],
             };
-            const invalidCdnNumber = 999;
 
-            await expect(videoService.tokenizeVideoSources(mockVideo, invalidCdnNumber))
-                .rejects.toThrowError('Invalid cdn number');
+            cdnService.getNextCdnNumber.mockReturnValue(999);
+
+            await expect(videoService.tokenizeVideoSources(mockVideo))
+                .rejects.toThrow(createError('Invalid cdn number', 400));
         });
 
         it('should throw an error when video has no sources', async () => {
@@ -83,9 +124,9 @@ describe('videoService', () => {
                 title: 'Big Buck Bunny',
                 sources: [],
             };
-            const cdnNumber = 1;
 
-            await expect(videoService.tokenizeVideoSources(mockVideo, cdnNumber)).rejects.toThrow('Video has no sources');
+            await expect(videoService.tokenizeVideoSources(mockVideo))
+                .rejects.toThrow(createError('Video has no sources', 400));
         });
 
         it('should throw an error when a source has an invalid src', async () => {
@@ -101,9 +142,9 @@ describe('videoService', () => {
                     },
                 ],
             };
-            const cdnNumber = 1;
 
-            await expect(videoService.tokenizeVideoSources(mockVideo, cdnNumber)).rejects.toThrow('Invalid source src');
+            await expect(videoService.tokenizeVideoSources(mockVideo))
+                .rejects.toThrow(createError('Invalid source src', 400));
         });
     });
 });
