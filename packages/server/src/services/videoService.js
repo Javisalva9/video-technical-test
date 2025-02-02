@@ -2,6 +2,9 @@ const Video = require('../models/Video');
 const crypto = require('crypto');
 const { CDNSECRETS, CDNURLS } = require('../constants/cdnSecrets');
 const { createError } = require('../common/error');
+const cdnService = require('./cdnService');
+
+let lastCdnNumber = 0;
 
 const getVideoById = async (videoId) => {
     try {
@@ -25,9 +28,13 @@ const getSecureSource = (originalSrc, secret, cdnUrl) => {
     }
 };
 
-const tokenizeVideoSources = async (video, cndNumber = 1) => {
-    const secret = CDNSECRETS[cndNumber];
-    const cdnUrl = CDNURLS[cndNumber];
+const tokenizeVideoSources = async (video, cdn) => {
+    const cdnNumber = cdn || cdnService.getNextCdnNumber(); // In case you want to forze a explicit cdn number
+    const secret = CDNSECRETS[cdnNumber];
+    const cdnUrl = CDNURLS[cdnNumber];
+
+    console.log(cdnNumber);
+
     if (!secret || !cdnUrl) {
         throw createError('Invalid cdn number', 400);
     }
