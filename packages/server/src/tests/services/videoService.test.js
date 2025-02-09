@@ -1,7 +1,5 @@
 const videoService = require('../../services/videoService');
 const Video = require('../../models/Video');
-const crypto = require('crypto');
-const { CDNSECRETS, CDNURLS } = require('../../constants/cdnSecrets');
 const { createError } = require('../../common/error'); // Importar createError
 const cdnService = require('../../services/cdnService');
 
@@ -31,120 +29,63 @@ describe('videoService', () => {
         });
     });
 
-    describe('tokenizeVideoSources', () => {
-        beforeEach(() => {
-            cdnService.getNextCdnNumber.mockReturnValue(1);
-        });
-
-        it('should use the next CDN number in sequence', async () => {
-            const mockVideo = {
+    describe('tokenizeVideo', () => {
+        it('should return a video with tokenized sources', async () => {
+            const mockVideo = { // No need to mock the model here
                 _id: '679e9a87e042bd58133fb2de',
                 videoId: '12345',
                 title: 'Big Buck Bunny',
                 sources: [
-                    {
-                        src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
-                        size: 1080,
-                        type: 'video/mp4',
-                    },
+                    { src: '/Big_Buck_Bunny_1080p.mp4', size: 1080, type: 'video/mp4' },
                 ],
             };
+            const mockTokenizedSources = [
+                { src: '/Big_Buck_Bunny_1080p.mp4?token=mocktoken', size: 1080, type: 'video/mp4' },
+            ];
 
-            cdnService.getNextCdnNumber.mockReturnValueOnce(1).mockReturnValueOnce(2).mockReturnValueOnce(3).mockReturnValueOnce(1);
+            cdnService.tokenizeVideoSources.mockReturnValue(mockTokenizedSources);
 
-            await videoService.tokenizeVideoSources(mockVideo);
-            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(1);
+            const video = await videoService.tokenizeVideo(mockVideo); // Pass mockVideo directly
 
-            await videoService.tokenizeVideoSources(mockVideo);
-            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(2);
-
-            await videoService.tokenizeVideoSources(mockVideo);
-            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(3);
-
-            await videoService.tokenizeVideoSources(mockVideo);
-            expect(cdnService.getNextCdnNumber).toHaveReturnedWith(1);
-        });
-
-        it('should return a video with tokenized sources when cdnNumber is valid', async () => {
-            const mockVideo = {
-                _id: '679e9a87e042bd58133fb2de',
-                videoId: '12345',
-                title: 'Big Buck Bunny',
-                sources: [
-                    {
-                        src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
-                        size: 1080,
-                        type: 'video/mp4',
-                    },
-                    {
-                        src: '/Big_Buck_Bunny_720p_surround_FrostWire.com.mp4',
-                        size: 720,
-                        type: 'video/mp4',
-                    },
-                ],
-            };
-
-            const cdnNumber = 1;
-            const secret = CDNSECRETS[cdnNumber];
-            const cdnUrl = CDNURLS[cdnNumber];
-
-            const expectedTokenizedSources = mockVideo.sources.map((source) => ({
-                ...source,
-                src: `${cdnUrl}${source.src}?token=${crypto.createHash('md5').update(`${source.src}?secret=${secret}`).digest('hex')}`,
-            }));
-
-            const video = await videoService.tokenizeVideoSources(mockVideo, cdnNumber);
-            expect(video).toEqual({ ...mockVideo, sources: expectedTokenizedSources });
-        });
-
-        it('should throw an error when cdnNumber is invalid', async () => {
-            const mockVideo = {
-                _id: '679e9a87e042bd58133fb2de',
-                videoId: '12345',
-                title: 'Big Buck Bunny',
-                sources: [
-                    {
-                        src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
-                        size: 1080,
-                        type: 'video/mp4',
-                    },
-                ],
-            };
-
-            cdnService.getNextCdnNumber.mockReturnValue(999);
-
-            await expect(videoService.tokenizeVideoSources(mockVideo))
-                .rejects.toThrow(createError('Invalid cdn number', 400));
+            expect(video).toEqual({
+                ...mockVideo,
+                sources: mockTokenizedSources,
+            });
+            expect(cdnService.tokenizeVideoSources).toHaveBeenCalledWith(mockVideo.sources, undefined); // Or with specific CDN if provided
         });
 
         it('should throw an error when video has no sources', async () => {
-            const mockVideo = {
+            let mockVideo = { // No need to mock the model here
                 _id: '679e9a87e042bd58133fb2de',
                 videoId: '12345',
                 title: 'Big Buck Bunny',
-                sources: [],
+                sources: [
+                    { src: '/Big_Buck_Bunny_1080p.mp4', size: 1080, type: 'video/mp4' },
+                ],
             };
+            mockVideo = { ...mockVideo, sources: [] };
 
-            await expect(videoService.tokenizeVideoSources(mockVideo))
-                .rejects.toThrow(createError('Video has no sources', 400));
+            await expect(videoService.tokenizeVideo(mockVideo)).rejects.toThrow(createError('Video has no sources', 400));
         });
 
-        it('should throw an error when a source has an invalid src', async () => {
+        it('should call cdnService with the provided cdn number', async () => {
             const mockVideo = {
                 _id: '679e9a87e042bd58133fb2de',
                 videoId: '12345',
                 title: 'Big Buck Bunny',
                 sources: [
-                    {
-                        src: null,
-                        size: 1080,
-                        type: 'video/mp4',
-                    },
+                    { src: '/Big_Buck_Bunny_1080p.mp4', size: 1080, type: 'video/mp4' },
                 ],
             };
+            const mockTokenizedSources = [
+                { src: '/Big_Buck_Bunny_1080p.mp4?token=mocktoken', size: 1080, type: 'video/mp4' },
+            ];
 
-            await expect(videoService.tokenizeVideoSources(mockVideo))
-                .rejects.toThrow(createError('Invalid source src', 400));
-        });
+            cdnService.tokenizeVideoSources.mockReturnValue(mockTokenizedSources);
+
+            const cdnNumber = 2;
+            await videoService.tokenizeVideo(mockVideo, cdnNumber);
+            expect(cdnService.tokenizeVideoSources).toHaveBeenCalledWith(mockVideo.sources, cdnNumber);
+        })
     });
 });

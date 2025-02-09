@@ -10,7 +10,7 @@ groff \
 curl \
 python \
 unzip \
-&& curl "https://d1vvhvl2y92vvt.cloudfront.net/awscli-exe-linux-x86_64.zip" \
+&& curl "https://url-generic/awscli-exe-linux-x86_64.zip" \
 -s \
 -o "awscliv2.zip" \
 && unzip -q awscliv2.zip \
