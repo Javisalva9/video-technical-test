@@ -12,14 +12,14 @@ services:
       dockerfile: ./Dockerfile
     image: pkosiec/mongo-seeding
     networks:
-      kodify-technical-test:
+      video-technical-test:
     volumes:
       - ./packages/server/docker/env/artifacts/seed/data/:/srv/import-data
 
   mongo:
     image: mongo:4.0.20@sha256:dd4cbe24eb8233db92b871cc556b77efcc7f9e67bc9516579796d4d08818273e
     networks:
-      kodify-technical-test:
+      video-technical-test:
     volumes:
       - mongo_data_db:/data/db
       - mongo_data_config_db:/data/configdb
@@ -35,37 +35,37 @@ services:
       context: ./packages/client
       dockerfile: ./docker/env/artifacts/client/Dockerfile
       target: development
-    image: kodify-technical-test-client:latest
+    image: video-technical-test-client:latest
     networks:
-      kodify-technical-test:
+      video-technical-test:
     ports:
       - 9227:9229
       - 3001:3000
     volumes:
-      - ./packages/client:/srv/kodify-technical-test-client
-      - node_modules_kodify-technical-test-client:/srv/kodify-technical-test-client/node_modules
+      - ./packages/client:/srv/video-technical-test-client
+      - node_modules_video-technical-test-client:/srv/video-technical-test-client/node_modules
 
   server:
     build:
       context: ./packages/server
       dockerfile: ./docker/env/artifacts/server/Dockerfile
       target: development
-    image: kodify-technical-test-server:latest
+    image: video-technical-test-server:latest
     networks:
-      kodify-technical-test:
+      video-technical-test:
     ports:
       - 9228:9229
       - 3002:80
     volumes:
-      - ./packages/server:/srv/kodify-technical-test-server
-      - node_modules_kodify-technical-test-server:/srv/kodify-technical-test-server/node_modules
+      - ./packages/server:/srv/video-technical-test-server
+      - node_modules_video-technical-test-server:/srv/video-technical-test-server/node_modules
 
   tests:
     build:
       context: ./packages/server
       dockerfile: ./docker/env/artifacts/server/Dockerfile.test
     networks:
-      kodify-technical-test:
+      video-technical-test:
 
   dependencies:
     image: dadarek/wait-for-dependencies
@@ -76,13 +76,13 @@ services:
       - SLEEP_LENGTH=5
       - TIMEOUT_LENGTH=60
     networks:
-      kodify-technical-test:
+      video-technical-test:
 
 volumes:
-  node_modules_kodify-technical-test-client:
-  node_modules_kodify-technical-test-server:
+  node_modules_video-technical-test-client:
+  node_modules_video-technical-test-server:
   mongo_data_db:
   mongo_data_config_db:
 
 networks:
-  kodify-technical-test:
+  video-technical-test:

@@ -5,9 +5,9 @@ const CDNSECRETS = {
 };
 
 const CDNURLS = {
-  1: "https://d2usdis6r1u782.cloudfront.net",
-  2: "https://d2oukvvww2uoq.cloudfront.net",
-  3: "https://dbke9ww44or29.cloudfront.net"
+  1: "https://cdn-url1.net",
+  2: "https://cdn-url2.net",
+  3: "https://cdn-url3.net"
 };
 
 module.exports = {CDNSECRETS, CDNURLS};

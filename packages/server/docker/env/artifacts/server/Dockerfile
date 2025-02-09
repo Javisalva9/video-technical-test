@@ -1,6 +1,6 @@
 FROM node:lts-alpine as base
 
-WORKDIR /srv/kodify-technical-test-server
+WORKDIR /srv/video-technical-test-server
 
 COPY package.json yarn.lock ./
 

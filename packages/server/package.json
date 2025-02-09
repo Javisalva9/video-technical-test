@@ -2,20 +2,12 @@
   "name": "server",
   "version": "0.0.0",
   "description": "Video Server",
-  "author": "DevTeam <developers@kodify.io>",
-  "homepage": "https://github.com/gmsllc/technical-test#readme",
+  "author": "",
   "license": "ISC",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gmsllc/technical-test/kodify-technical-test.git"
-  },
   "scripts": {
     "start": "node_modules/.bin/nodemon src/index.js",
     "test": "jest"
-  },
-  "bugs": {
-    "url": "https://github.com/gmsllc/technical-test/issues"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
