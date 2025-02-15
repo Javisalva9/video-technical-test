@@ -1,6 +1,6 @@
 const videoViewedRecordService = require('../../services/videoViewedRecordService');
 const VideoViewedRecord = require('../../models/VideoViewedRecord');
-const { createError } = require('../../common/error');
+const { createAppError } = require('../../common/error');
 
 jest.mock('../../models/VideoViewedRecord');
 
@@ -36,7 +36,7 @@ describe('videoViewedRecordService', () => {
     Date.now = originalDateNow;
   });
 
-  it('should throw a createError if VideoViewedRecord creation fails', async () => {
+  it('should throw a createAppError if VideoViewedRecord creation fails', async () => {
     const videoId = '12345';
     const clientIp = '192.168.1.1';
     const errorMessage = 'Creation failed';
@@ -44,14 +44,14 @@ describe('videoViewedRecordService', () => {
     VideoViewedRecord.create.mockRejectedValue(new Error(errorMessage));
 
     await expect(videoViewedRecordService.createVideoViewedRecord(videoId, clientIp))
-      .rejects.toThrow(createError('Error creating video view record', 500));
+      .rejects.toThrow(createAppError('Error creating video view record', 500));
   });
 
-  it('should throw a createError if videoId is invalid', async () => {
+  it('should throw a createAppError if videoId is invalid', async () => {
     const videoId = null;
     const clientIp = '192.168.1.1';
 
     await expect(videoViewedRecordService.createVideoViewedRecord(videoId, clientIp))
-      .rejects.toThrow(createError('Error creating video view record', 500));
+      .rejects.toThrow(createAppError('Error creating video view record', 500));
   });
 });

@@ -2,13 +2,14 @@ const request = require('supertest');
 const { app, startServer } = require('../../index');
 const videoService = require('../../services/videoService');
 const videoViewedRecordService = require('../../services/videoViewedRecordService');
-const { createError } = require('../../common/error');
+const cdnService = require('../../services/cdnService'); // Import cdnService
+const { createAppError, ValidationError } = require('../../common/error');
 
 jest.mock('../../services/videoService');
 jest.mock('../../services/videoViewedRecordService');
+jest.mock('../../services/cdnService');
 
 describe('videoController', () => {
-
   let server;
 
   beforeAll(async () => {
@@ -37,7 +38,7 @@ describe('videoController', () => {
     });
 
     it('should return 404 when video is not found', async () => {
-      videoService.getVideoById.mockRejectedValue(createError('Video not found', 404));
+      videoService.getVideoById.mockRejectedValue(createAppError('Video not found', 404));
 
       const res = await request(app).get('/video/123');
 
@@ -57,15 +58,15 @@ describe('videoController', () => {
     });
 
     it('should call createVideoViewedRecord when a video is found', async () => {
-        const mockVideo = { videoId: '12345', title: 'Test Video' };
-        videoService.getVideoById.mockResolvedValue(mockVideo);
-        videoViewedRecordService.createVideoViewedRecord.mockResolvedValue();
-  
-        const res = await request(app).get('/video/12345');
-  
-        expect(res.statusCode).toEqual(200);
-        expect(videoViewedRecordService.createVideoViewedRecord).toHaveBeenCalledWith('12345', expect.any(String));
-      });
+      const mockVideo = { videoId: '12345', title: 'Test Video' };
+      videoService.getVideoById.mockResolvedValue(mockVideo);
+      videoViewedRecordService.createVideoViewedRecord.mockResolvedValue();
+
+      const res = await request(app).get('/video/12345');
+
+      expect(res.statusCode).toEqual(200);
+      expect(videoViewedRecordService.createVideoViewedRecord).toHaveBeenCalledWith('12345', expect.any(String));
+    });
   });
 
   describe('getVideoWithToken', () => {
@@ -87,71 +88,73 @@ describe('videoController', () => {
           },
         ],
       };
-      const tokenizedVideo = {
-        ...mockVideo,
-        sources: [
-          {
-            src: 'tokenized_url_1',
-            size: 1080,
-            type: 'video/mp4',
-          },
-          {
-            src: 'tokenized_url_2',
-            size: 720,
-            type: 'video/mp4',
-          },
-        ],
-      };
-      videoService.tokenizeVideoSources.mockResolvedValue(tokenizedVideo);
+
+      const tokenizedSources = [
+        {
+          src: 'tokenized_url_1',
+          size: 1080,
+          type: 'video/mp4',
+        },
+        {
+          src: 'tokenized_url_2',
+          size: 720,
+          type: 'video/mp4',
+        },
+      ];
+      
+      cdnService.tokenizeVideoSources.mockReturnValue(tokenizedSources); 
+      videoService.tokenizeVideo.mockResolvedValue({
+      ...mockVideo,
+        sources: tokenizedSources,
+      });
 
       const res = await request(app).post('/video/token').send({ video: mockVideo });
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toEqual(tokenizedVideo);
-      expect(videoService.tokenizeVideoSources).toHaveBeenCalledWith(mockVideo);
+      expect(res.body.sources).toEqual(tokenizedSources); 
     });
 
-    it('should return error message when tokenizeVideoSources throws createError', async () => {
-        const mockVideo = {
-            _id: '679e9a87e042bd58133fb2de',
-            videoId: '12345',
-            title: 'Big Buck Bunny',
-            sources: [
-                {
-                    src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
-                    size: 1080,
-                    type: 'video/mp4',
-                },
-            ],
-        };
-        videoService.tokenizeVideoSources.mockRejectedValue(createError('Invalid cdn number', 400));
+    it('should return error message when tokenizeVideo throws ValidationError', async () => {
+      const mockVideo = {
+        _id: '679e9a87e042bd58133fb2de',
+        videoId: '12345',
+        title: 'Big Buck Bunny',
+        sources: [
+          {
+            src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
+            size: 1080,
+            type: 'video/mp4',
+          },
+        ],
+      };
+      videoService.tokenizeVideo.mockRejectedValue(new ValidationError('Invalid cdn number'));
 
-        const res = await request(app).post('/video/token').send({ video: mockVideo });
+      const res = await request(app).post('/video/token').send({ video: mockVideo });
 
-        expect(res.statusCode).toEqual(400);
-        expect(res.body).toEqual({ message: 'Invalid cdn number' });
-        expect(videoService.tokenizeVideoSources).toHaveBeenCalledWith(mockVideo);
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toEqual({ message: 'Invalid cdn number' });
+      expect(videoService.tokenizeVideo).toHaveBeenCalledWith(mockVideo);
     });
 
     it('should return 500 when a generic error occurs', async () => {
-        const mockVideo = {
-            _id: '679e9a87e042bd58133fb2de',
-            videoId: '12345',
-            title: 'Big Buck Bunny',
-            sources: [
-                {
-                    src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
-                    size: 1080,
-                    type: 'video/mp4',
-                },
-            ],
-        };
-        videoService.tokenizeVideoSources.mockRejectedValue(new Error('Generic Error'));
+      const mockVideo = {
+        _id: '679e9a87e042bd58133fb2de',
+        videoId: '12345',
+        title: 'Big Buck Bunny',
+        sources: [
+          {
+            src: '/Big_Buck_Bunny_1080p_surround_FrostWire.com.mp4',
+            size: 1080,
+            type: 'video/mp4',
+          },
+        ],
+      };
+      videoService.tokenizeVideo.mockRejectedValue(new Error('Generic Error'));
 
-        const res = await request(app).post('/video/token').send({ video: mockVideo });
+      const res = await request(app).post('/video/token').send({ video: mockVideo });
 
-        expect(res.statusCode).toEqual(500);
-        expect(videoService.tokenizeVideoSources).toHaveBeenCalledWith(mockVideo);
+      expect(res.statusCode).toEqual(500);
+      expect(videoService.tokenizeVideo).toHaveBeenCalledWith(mockVideo);
     });
   });
 });

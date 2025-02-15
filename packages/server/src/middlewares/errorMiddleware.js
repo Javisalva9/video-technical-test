@@ -1,5 +1,4 @@
 const errorMiddleware = (err, req, res, next) => {
-    console.error(err); 
 
     if (err.status) { 
         res.status(err.status).json({ message: err.message });
